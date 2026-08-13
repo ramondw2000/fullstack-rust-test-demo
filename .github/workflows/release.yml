@@ -1,0 +1,27 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Build
+        run: cargo build --release
+      # Renamed to include the "linux" keyword the runner's asset-matching
+      # heuristic looks for (see apps/web/lib/github/find-linux-executable.ts),
+      # with no extension so it isn't mistaken for an archive/package.
+      - name: Rename release asset
+        run: cp target/release/demo-server demo-server-linux
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: demo-server-linux
