@@ -30,6 +30,18 @@ jobs:
       # with no extension so it isn't mistaken for an archive/package.
       - name: Rename release asset
         run: cp target/x86_64-unknown-linux-musl/release/demo-server demo-server-linux
+      # Smoke-test inside the exact base image cv_website's runner service
+      # uses (node:22-alpine) -- fail the build here rather than find out via
+      # a live Test Launch against Render.
+      - name: Smoke test in Alpine
+        run: |
+          chmod +x demo-server-linux
+          docker run --rm -d --name smoketest -v "$PWD:/app" -w /app -e PORT=8787 -p 8787:8787 node:22-alpine ./demo-server-linux
+          sleep 2
+          docker logs smoketest
+          curl -sf http://localhost:8787/ > /dev/null
+          curl -sf http://localhost:8787/api/hello
+          docker stop smoketest
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
         with:
