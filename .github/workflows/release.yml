@@ -13,14 +13,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # musl, not the gnu default -- cv_website's runner service ships as
+      # node:22-alpine (musl libc), and a glibc-linked binary can't even
+      # exec there (no ld-linux.so interpreter present). Rust's musl target
+      # links statically by default, so this runs on any Linux regardless
+      # of libc.
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-unknown-linux-musl
+      - name: Install musl tools
+        run: sudo apt-get update && sudo apt-get install -y musl-tools
       - name: Build
-        run: cargo build --release
+        run: cargo build --release --target x86_64-unknown-linux-musl
       # Renamed to include the "linux" keyword the runner's asset-matching
       # heuristic looks for (see apps/web/lib/github/find-linux-executable.ts),
       # with no extension so it isn't mistaken for an archive/package.
       - name: Rename release asset
-        run: cp target/release/demo-server demo-server-linux
+        run: cp target/x86_64-unknown-linux-musl/release/demo-server demo-server-linux
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
         with:
