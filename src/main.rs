@@ -57,6 +57,20 @@ fn handle(mut stream: TcpStream) {
             "application/json",
             "{\"message\":\"hello from the rust backend\"}".to_string(),
         )
+    } else if path == "/api/env-check" {
+        // cv_website GH issue Phase 37 verification: proves an admin-supplied
+        // custom env file actually reaches this spawned process, without
+        // needing an interactive terminal/PTY (unlike cli_tool demos, this
+        // server can just be asked directly over HTTP).
+        let value = env::var("PHASE37_TEST_VAR")
+            .unwrap_or_else(|_| "unset".to_string())
+            .replace('\\', "\\\\")
+            .replace('"', "\\\"");
+        (
+            "200 OK",
+            "application/json",
+            format!("{{\"phase37TestVar\":\"{value}\"}}"),
+        )
     } else {
         ("404 Not Found", "text/plain", "not found".to_string())
     };
