@@ -26,7 +26,7 @@ const INDEX_HTML: &str = r##"<!doctype html>
     <p>temporary fixture &mdash; safe to delete</p>
     <button onclick="ping()">call backend</button>
     <div id="out"></div>
-    <div id="env-out">PHASE37_TEST_VAR: loading&hellip;</div>
+    <div id="env-out">Loading the admin-supplied PHASE37_TEST_VAR value&hellip;</div>
   </div>
   <script>
     async function ping() {
@@ -44,9 +44,11 @@ const INDEX_HTML: &str = r##"<!doctype html>
       try {
         const res = await fetch("api/env-check");
         const data = await res.json();
-        target.textContent = `PHASE37_TEST_VAR: ${data.phase37TestVar}`;
+        target.textContent = data.phase37TestVar === "unset"
+          ? "No admin-supplied PHASE37_TEST_VAR env file is attached to this project."
+          : `This project's admin-supplied PHASE37_TEST_VAR env file currently sets it to "${data.phase37TestVar}".`;
       } catch (err) {
-        target.textContent = `PHASE37_TEST_VAR: (fetch failed: ${err})`;
+        target.textContent = `Couldn't check the PHASE37_TEST_VAR value: ${err}`;
       }
     }
     loadEnv();
