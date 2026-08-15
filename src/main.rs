@@ -17,6 +17,7 @@ const INDEX_HTML: &str = r##"<!doctype html>
   .card { text-align: center; }
   button { margin-top: 1rem; padding: 0.5rem 1rem; font-family: inherit; cursor: pointer; }
   #out { margin-top: 1rem; color: #b268f3; min-height: 1.5em; }
+  #env-out { margin-top: 1.5rem; color: #6fd97f; min-height: 1.5em; font-size: 0.9rem; }
 </style>
 </head>
 <body>
@@ -25,6 +26,7 @@ const INDEX_HTML: &str = r##"<!doctype html>
     <p>temporary fixture &mdash; safe to delete</p>
     <button onclick="ping()">call backend</button>
     <div id="out"></div>
+    <div id="env-out">PHASE37_TEST_VAR: loading&hellip;</div>
   </div>
   <script>
     async function ping() {
@@ -32,6 +34,22 @@ const INDEX_HTML: &str = r##"<!doctype html>
       const data = await res.json();
       document.getElementById("out").textContent = data.message;
     }
+    // Fetched automatically on load (not gated behind a button, unlike
+    // ping() above) so the value is visible the instant a Test
+    // Launch/live-demo preview opens -- the whole point is a fast visual
+    // check that an admin's env-file edit actually reached this process,
+    // without a separate curl to /api/env-check.
+    async function loadEnv() {
+      const target = document.getElementById("env-out");
+      try {
+        const res = await fetch("api/env-check");
+        const data = await res.json();
+        target.textContent = `PHASE37_TEST_VAR: ${data.phase37TestVar}`;
+      } catch (err) {
+        target.textContent = `PHASE37_TEST_VAR: (fetch failed: ${err})`;
+      }
+    }
+    loadEnv();
   </script>
 </body>
 </html>"##;
